@@ -34,7 +34,7 @@ void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collect
 		{
 			//PrintDebugString("Session Interface is Valid!");
 			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnCreateSessionComplete);
-
+			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnDestroySessionComplete);
 		}
 	}
 }
@@ -55,6 +55,17 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 	}
 
 	FName MySessionName = FName("Co-op Adventure Session Name");
+
+	FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(MySessionName);
+	if (ExistingSession)
+	{
+		FString Msg = FString::Printf(TEXT("Session %s Already Exists, Destroying..."), *MySessionName.ToString());
+		PrintDebugString(Msg);
+		bCreateServerAfterDestroy = true;
+		DestroyServerName = ServerName;
+		SessionInterface->DestroySession(MySessionName);
+		return;
+	}
 
 	FOnlineSessionSettings SessionSettings;
 	SessionSettings.bAllowJoinInProgress = true;
@@ -86,6 +97,17 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 	if (bWasSuccessful)
 	{
 		GetWorld()->ServerTravel("/Game/ThirdPerson/Maps/ThirdPersonMap?listen");
+	}
+}
+
+void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	PrintDebugString("DestroySessionComplete");
+
+	if (bWasSuccessful && bCreateServerAfterDestroy)
+	{
+		bCreateServerAfterDestroy = false;
+		CreateServer(DestroyServerName);
 	}
 }
 
