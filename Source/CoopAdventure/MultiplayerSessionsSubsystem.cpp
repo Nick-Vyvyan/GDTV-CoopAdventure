@@ -3,7 +3,8 @@
 
 #include "MultiplayerSessionsSubsystem.h"
 #include "OnlineSubsystem.h"
-#include "OnlineSessionSettings.h"
+#include "Online/OnlineSessionNames.h"
+
 
 
 void PrintDebugString(const FString& Message)
@@ -35,6 +36,7 @@ void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collect
 			//PrintDebugString("Session Interface is Valid!");
 			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnCreateSessionComplete);
 			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnDestroySessionComplete);
+			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnFindSessionsComplete);
 		}
 	}
 }
@@ -87,7 +89,24 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 
 void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 {
-	PrintDebugString("FindServer: " + ServerName);
+	//PrintDebugString("FindServer: " + ServerName);
+	if (ServerName.IsEmpty())
+	{
+		PrintDebugString("ServerName cannot be empty!");
+		return;
+	}
+
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	bool bIsLan = false;
+	if (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL")
+	{
+		bIsLan = true;
+	}
+	SessionSearch->bIsLanQuery = bIsLan;
+	SessionSearch->MaxSearchResults = 9999;
+	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+
+	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
 
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
@@ -109,5 +128,27 @@ void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, 
 		bCreateServerAfterDestroy = false;
 		CreateServer(DestroyServerName);
 	}
+}
+
+void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
+{
+	if (!bWasSuccessful)
+	{
+		return;
+	}
+
+	TArray<FOnlineSessionSearchResult> Results = SessionSearch->SearchResults;
+	if (Results.Num() > 0)
+	{
+		FString Msg = FString::Printf(TEXT("Sessions Found: %d"), Results.Num());
+
+		PrintDebugString(Msg);
+	}
+	else
+	{
+		PrintDebugString("Zero Sessions Found");
+	}
+
+
 }
 
