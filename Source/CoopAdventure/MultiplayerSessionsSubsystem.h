@@ -24,4 +24,14 @@ public:
 	// End USubsystem
 
 	IOnlineSessionPtr SessionInterface;
+
+	UFUNCTION(BlueprintCallable)
+	void CreateServer(FString ServerName);
+
+	UFUNCTION(BlueprintCallable)
+	void FindServer(FString ServerName);
+
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+
 };
