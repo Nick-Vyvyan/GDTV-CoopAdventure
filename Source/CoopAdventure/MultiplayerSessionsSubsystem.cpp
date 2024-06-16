@@ -18,6 +18,7 @@ void PrintDebugString(const FString& Message)
 UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 {
 	//PrintDebugString("MSS Constructor");
+	MySessionName = FName("Co-op Adventure Session Name");
 }
 
 void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -37,6 +38,7 @@ void UMultiplayerSessionsSubsystem::Initialize(FSubsystemCollectionBase& Collect
 			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnCreateSessionComplete);
 			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnDestroySessionComplete);
 			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnFindSessionsComplete);
+			SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMultiplayerSessionsSubsystem::OnJoinSessionComplete);
 		}
 	}
 }
@@ -55,8 +57,6 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 		PrintDebugString("ServerName cannot be empty!");
 		return;
 	}
-
-	FName MySessionName = FName("Co-op Adventure Session Name");
 
 	FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(MySessionName);
 	if (ExistingSession)
@@ -84,6 +84,8 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 	}
 	SessionSettings.bIsLANMatch = bIsLan;
 
+	SessionSettings.Set(FName("SERVER_NAME"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+
 	SessionInterface->CreateSession(0, MySessionName, SessionSettings);
 }
 
@@ -105,6 +107,8 @@ void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 	SessionSearch->bIsLanQuery = bIsLan;
 	SessionSearch->MaxSearchResults = 9999;
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+
+	ServerNameToFind = ServerName;
 
 	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
@@ -136,13 +140,45 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 	{
 		return;
 	}
+	if (ServerNameToFind.IsEmpty())
+	{
+		return;
+	}
 
 	TArray<FOnlineSessionSearchResult> Results = SessionSearch->SearchResults;
 	if (Results.Num() > 0)
 	{
 		FString Msg = FString::Printf(TEXT("Sessions Found: %d"), Results.Num());
-
 		PrintDebugString(Msg);
+
+		FOnlineSessionSearchResult* CorrectResult = 0;
+
+		for (FOnlineSessionSearchResult Result : Results)
+		{
+			if (Result.IsValid())
+			{
+				FString ServerName = "No_Name";
+				Result.Session.SessionSettings.Get(FName("SERVER_NAME"), ServerName);
+
+				if (ServerName.Equals(ServerNameToFind))
+				{
+					CorrectResult = &Result;
+					FString Msg2 = FString::Printf(TEXT("Found Server with name: %s"), *ServerName);
+					PrintDebugString(Msg2);
+					break;
+				}
+			}
+		}
+
+		if (CorrectResult)
+		{
+			SessionInterface->JoinSession(0, MySessionName, *CorrectResult);
+		}
+		else
+		{
+			PrintDebugString("Could Not Find Server: " + ServerNameToFind);
+			ServerNameToFind = "";
+		}
 	}
 	else
 	{
@@ -150,5 +186,34 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 	}
 
 
+}
+
+void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	if (Result == EOnJoinSessionCompleteResult::Success)
+	{
+		FString Msg = FString::Printf(TEXT("Successfully Joined Session %s"), *SessionName.ToString());
+		PrintDebugString(Msg);
+
+		FString Address = "";
+		bool bSuccess = SessionInterface->GetResolvedConnectString(MySessionName, Address);
+		if (bSuccess)
+		{
+			PrintDebugString(FString::Printf(TEXT("Address: %s"), *Address));
+			APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+			if (PlayerController)
+			{
+				PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+			}
+		}
+		else
+		{
+			PrintDebugString("GetResolvedConnectString returned false!");
+		}
+	}
+	else
+	{
+		PrintDebugString("OnJoinSessionComplete failed");
+	}
 }
 
