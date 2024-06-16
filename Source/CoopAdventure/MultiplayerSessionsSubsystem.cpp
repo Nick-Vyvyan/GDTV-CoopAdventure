@@ -7,7 +7,7 @@
 
 
 
-void PrintDebugString(const FString& Message, FColor Color = FColor::Cyan)
+void static PrintDebugString(const FString& Message, FColor Color = FColor::Cyan)
 {
 	if (GEngine)
 	{
@@ -55,6 +55,7 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 	if (ServerName.IsEmpty())
 	{
 		PrintDebugString("ServerName cannot be empty!", FColor::Red);
+		ServerCreateDel.Broadcast(false);
 		return;
 	}
 
@@ -95,6 +96,7 @@ void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 	if (ServerName.IsEmpty())
 	{
 		PrintDebugString("ServerName cannot be empty!", FColor::Red);
+		ServerJoinDel.Broadcast(false);
 		return;
 	}
 
@@ -115,7 +117,9 @@ void UMultiplayerSessionsSubsystem::FindServer(FString ServerName)
 
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
-	PrintDebugString(FString::Printf(TEXT("OnCreateSessionComplete: %d"), bWasSuccessful), FColor::Green);
+	PrintDebugString(FString::Printf(TEXT("OnCreateSessionComplete: %d"), bWasSuccessful));
+
+	ServerCreateDel.Broadcast(bWasSuccessful);
 
 	if (bWasSuccessful)
 	{
@@ -138,10 +142,12 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 {
 	if (!bWasSuccessful)
 	{
+		ServerJoinDel.Broadcast(false);
 		return;
 	}
 	if (ServerNameToFind.IsEmpty())
 	{
+		ServerJoinDel.Broadcast(false);
 		return;
 	}
 
@@ -178,11 +184,13 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 		{
 			PrintDebugString("Could Not Find Server: " + ServerNameToFind, FColor::Red);
 			ServerNameToFind = "";
+			ServerJoinDel.Broadcast(false);
 		}
 	}
 	else
 	{
 		PrintDebugString("Zero Sessions Found", FColor::Red);
+		ServerJoinDel.Broadcast(false);
 	}
 
 
@@ -190,6 +198,8 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
+	ServerJoinDel.Broadcast(Result == EOnJoinSessionCompleteResult::Success);
+
 	if (Result == EOnJoinSessionCompleteResult::Success)
 	{
 		FString Msg = FString::Printf(TEXT("Successfully Joined Session %s"), *SessionName.ToString());
