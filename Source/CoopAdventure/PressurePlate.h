@@ -44,6 +44,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FPressurePlateOnDeactivated OnDeactivated;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	class UTransporter* Transporter;
+
 private:
 	void TriggerActivation();
 

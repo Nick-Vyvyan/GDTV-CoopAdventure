@@ -2,6 +2,12 @@
 
 
 #include "PressurePlate.h"
+#include "Transporter.h"
+
+void static InitTriggerMesh()
+{
+
+}
 
 // Sets default values
 APressurePlate::APressurePlate()
@@ -17,6 +23,8 @@ APressurePlate::APressurePlate()
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
 
+
+	// ------------------ INITIALIZE TRIGGER MESH -------------------
 	TriggerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TriggerMesh"));
 	TriggerMesh->SetupAttachment(RootComp);
 	TriggerMesh->SetIsReplicated(true);
@@ -29,7 +37,10 @@ APressurePlate::APressurePlate()
 		TriggerMesh->SetRelativeScale3D(FVector(3, 3, 0.2f));
 		TriggerMesh->SetRelativeLocation(FVector(0, 0, 10.f));
 	}
+	// ------------------ END INITIALIZE TRIGGER MESH ---------------------
 
+
+	// ------------------ INITIALIZE MESH ---------------------------------
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComp);
 	Mesh->SetIsReplicated(true);
@@ -42,8 +53,11 @@ APressurePlate::APressurePlate()
 		Mesh->SetRelativeScale3D(FVector(4.f, 4.f, 0.5f));
 		Mesh->SetRelativeLocation(FVector(0.f, 0.f, 7.2f));
 	}
+	// ------------------ END INITIALIZE MESH -----------------------------
 
-
+	Transporter = CreateDefaultSubobject<UTransporter>(TEXT("Transporter"));
+	Transporter->MoveTime = 0.25f;
+	Transporter->bOwnerIsTriggerActor = true;
 }
 
 // Called when the game starts or when spawned
@@ -54,6 +68,9 @@ void APressurePlate::BeginPlay()
 	TriggerMesh->SetVisibility(false);
 	TriggerMesh->SetCollisionProfileName(FName("OverlapAll"));
 
+	FVector Point1 = GetActorLocation();
+	FVector Point2 = Point1 + FVector(0, 0, -10);
+	Transporter->SetPoints(Point1, Point2);
 }
 
 // Called every frame
