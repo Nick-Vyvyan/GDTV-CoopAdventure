@@ -23,6 +23,7 @@ AMovableActor::AMovableActor()
 	Point2 = CreateDefaultSubobject<UArrowComponent>(TEXT("Point2"));
 	Point2->SetupAttachment(RootComp);
 	Point2->SetRelativeLocation(FVector(0, 0, 300.f));
+	Point2->ArrowColor = FColor::Magenta;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComp);
