@@ -35,5 +35,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bActivated;
 
+private:
+	void TriggerActivation();
 
 };
