@@ -93,6 +93,7 @@ void APressurePlate::TriggerActivation()
 			{
 				bActivated = true;
 				GEngine->AddOnScreenDebugMessage(-1, 1, FColor::White, TEXT("Activated"));
+				OnActivated.Broadcast();
 			}
 		}
 		else
@@ -101,6 +102,7 @@ void APressurePlate::TriggerActivation()
 			{
 				bActivated = false;
 				GEngine->AddOnScreenDebugMessage(-1, 1, FColor::White, TEXT("Deactivated"));
+				OnDeactivated.Broadcast();
 			}
 		}
 	}
