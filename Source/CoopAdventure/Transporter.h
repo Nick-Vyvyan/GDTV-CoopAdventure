@@ -24,6 +24,10 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	void UpdateTriggerActorsTriggered();
+
+	void MoveOwner(float DeltaTime);
+
 
 	FVector StartPoint;
 	FVector EndPoint;
@@ -42,7 +46,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bAllTriggerActorsTriggered;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetPoints(FVector Point1, FVector Point2);
 
 	UFUNCTION()

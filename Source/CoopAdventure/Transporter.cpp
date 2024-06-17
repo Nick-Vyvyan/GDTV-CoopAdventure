@@ -73,12 +73,38 @@ void UTransporter::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	UpdateTriggerActorsTriggered();
+
+	MoveOwner(DeltaTime);
+}
+
+void UTransporter::UpdateTriggerActorsTriggered()
+{
 	if (NumPressurePlates > 0)
 	{
 		bAllTriggerActorsTriggered = (ActivatedTriggerCount >= NumPressurePlates);
 		if (bAllTriggerActorsTriggered)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 1, FColor::White, FString("All Trigger Actors Triggered"));
+		}
+	}
+}
+
+void UTransporter::MoveOwner(float DeltaTime)
+{
+	AActor* MyOwner = GetOwner();
+
+	if (MyOwner && MyOwner->HasAuthority() && bArePointsSet)
+	{
+		FVector CurrentLocation = MyOwner->GetActorLocation();
+		float Speed = FVector::Dist(StartPoint, EndPoint) / MoveTime;
+
+		FVector TargetLocation = bAllTriggerActorsTriggered ? EndPoint : StartPoint;
+
+		if (!CurrentLocation.Equals(TargetLocation))
+		{
+			FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, TargetLocation, DeltaTime, Speed);
+			MyOwner->SetActorLocation(NewLocation);
 		}
 	}
 }
