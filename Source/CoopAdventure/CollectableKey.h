@@ -25,6 +25,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class ACollectableKeyHolder* KeyHolder;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USceneComponent* RootComp;
 
