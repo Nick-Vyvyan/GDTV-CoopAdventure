@@ -47,6 +47,8 @@ void AWinArea::Tick(float DeltaTime)
 				if (bWinCondition)
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Game Over: WIN!"));
+
+					MulticastRPCWin();
 				}
 			}
 			else
@@ -55,5 +57,10 @@ void AWinArea::Tick(float DeltaTime)
 			}
 		}
 	}
+}
+
+void AWinArea::MulticastRPCWin_Implementation()
+{
+	OnWinCondition.Broadcast();
 }
 

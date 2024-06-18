@@ -6,12 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "WinArea.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWinAreaOnWinCondition);
+
 UCLASS()
 class COOPADVENTURE_API AWinArea : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AWinArea();
 
@@ -19,7 +21,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -29,4 +31,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bWinCondition;
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCWin();
+
+	UPROPERTY(BlueprintAssignable)
+	FWinAreaOnWinCondition OnWinCondition;
 };
