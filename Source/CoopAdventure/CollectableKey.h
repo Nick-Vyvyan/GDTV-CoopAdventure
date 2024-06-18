@@ -39,4 +39,10 @@ public:
 
 	UFUNCTION()
 	void OnRep_IsCollected();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float RotationSpeed;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UAudioComponent* CollectAudio;
 };
