@@ -40,7 +40,7 @@ void ACollectableKey::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 void ACollectableKey::OnRep_IsCollected()
 {
-
+	UE_LOG(LogTemp, Warning, TEXT("Key Collected"));
 }
 
 
