@@ -3,6 +3,7 @@
 
 #include "Transporter.h"
 #include "PressurePlate.h"
+#include "CollectableKey.h"
 
 // Sets default values for this component's properties
 UTransporter::UTransporter()
@@ -51,22 +52,28 @@ void UTransporter::BeginPlay()
 		APressurePlate* PressurePlateActor = Cast<APressurePlate>(TA);
 		if (PressurePlateActor)
 		{
-			PressurePlateActor->OnActivated.AddDynamic(this, &UTransporter::OnPressurePlateActivated);
-			PressurePlateActor->OnDeactivated.AddDynamic(this, &UTransporter::OnPressurePlateDeactivated);
-			NumPressurePlates++;
+			PressurePlateActor->OnActivated.AddDynamic(this, &UTransporter::OnTriggerActorActivated);
+			PressurePlateActor->OnDeactivated.AddDynamic(this, &UTransporter::OnTriggerActorDeactivated);
+			continue;
+		}
+
+		ACollectableKey* KeyActor = Cast<ACollectableKey>(TA);
+		if (KeyActor)
+		{
+			KeyActor->OnCollected.AddDynamic(this, &UTransporter::OnTriggerActorActivated);
 		}
 	}
 
 }
 
-void UTransporter::OnPressurePlateActivated()
+void UTransporter::OnTriggerActorActivated()
 {
 	ActivatedTriggerCount++;
 	//FString Msg = FString::Printf(TEXT("Transporter Activated: %d"), ActivatedTriggerCount);
 	//GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, Msg);
 }
 
-void UTransporter::OnPressurePlateDeactivated()
+void UTransporter::OnTriggerActorDeactivated()
 {
 	ActivatedTriggerCount--;
 	//FString Msg = FString::Printf(TEXT("Transporter Deactivated: %d"), ActivatedTriggerCount);
@@ -85,9 +92,9 @@ void UTransporter::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 
 void UTransporter::UpdateTriggerActorsTriggered()
 {
-	if (NumPressurePlates > 0)
+	if (TriggerActors.Num() > 0)
 	{
-		bAllTriggerActorsTriggered = (ActivatedTriggerCount >= NumPressurePlates);
+		bAllTriggerActorsTriggered = (ActivatedTriggerCount >= TriggerActors.Num());
 		if (bAllTriggerActorsTriggered)
 		{
 			//GEngine->AddOnScreenDebugMessage(-1, 1, FColor::White, FString("All Trigger Actors Triggered"));

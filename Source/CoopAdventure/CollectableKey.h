@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "CollectableKey.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCollectableKeyOnCollected);
+
+
 UCLASS()
 class COOPADVENTURE_API ACollectableKey : public AActor
 {
@@ -42,6 +45,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_IsCollected();
+
+	UPROPERTY(BlueprintAssignable)
+	FCollectableKeyOnCollected OnCollected;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float RotationSpeed;
